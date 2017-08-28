@@ -5,6 +5,7 @@
 """
 from time import time
 from json import dumps
+
 from toycoin.exceptions import MalformedTransaction
 from toycoin.utils import validate_wallet_address, sign_txn
 

@@ -25,3 +25,11 @@ class MalformedTransaction(Exception):
 
     def __init__(self, msg):
         super(MalformedTransaction, self).__init__(msg)
+
+class MalformedWallet(Exception):
+    """ represents an malformed wallet """
+
+    BAD_WALLET = "malformed wallet"
+
+    def __init__(self, msg):
+        super(MalformedWallet, self).__init__(msg)

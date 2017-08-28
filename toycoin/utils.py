@@ -3,6 +3,10 @@
     @created 26 August 2017 IST
     reusable utilities
 """
+from base64 import b64encode
+from rsa import sign, PublicKey, PrivateKey
+
+from toycoin.exceptions import MalformedWallet
 
 class enum(object):
     """
@@ -12,6 +16,23 @@ class enum(object):
 
     def __setattr__(self, key, val):
         return
+
+def validate_wallet(wallet):
+    """
+        validate if the wallet instance
+        passed is indeed an tuple of length
+        two and the first and second keys r
+        true
+    """
+    flag = True
+
+    flag = isinstance(wallet, tuple)
+    flag = flag and len(wallet) == 2
+
+    flag = flag and isinstance(wallet[0], PublicKey)
+    flag = flag and isinstance(wallet[1], PrivateKey)
+
+    return flag
 
 def validate_wallet_address(addr):
     """
@@ -31,10 +52,20 @@ def validate_block_hash(hesh):
 
     return True
 
-def sign_txn(payload, priv_key):
+def sign_txn(wallet, payload, encode=True):
     """
-        signs a payload using the private
-        key an
+        signs a payload using the
+        given wallet key
     """
+    assert isinstance(payload, str)
 
-    return priv_key
+    if not validate_wallet(wallet):
+        raise MalformedWallet(
+            MalformedWallet.BAD_WALLET)
+
+    ret = sign(payload, wallet[1], "MD5")
+
+    if encode:
+        ret = b64encode(ret)
+
+    return ret

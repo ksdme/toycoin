@@ -4,6 +4,7 @@
 """
 from time import time
 from json import dumps
+from hashlib import md5
 
 from toycoin.conf import BlockConf
 from toycoin.structs.txn import Txn
@@ -15,6 +16,16 @@ class Block(object):
         Simply represents a general block
         on a the toycoin blockchain
     """
+
+    @staticmethod
+    def calculate_hash(partial_block):
+        """
+            calculates the hash
+            of the partial block which is then
+            added to convert it into a complete block
+        """
+        assert isinstance(partial_block, dict)
+        return md5(dumps(partial_block)).hexdigest()
 
     def __init__(self, prev_hash=None, txs=None, nonce="", difficulty=None):
         assert isinstance(nonce, str)
@@ -87,11 +98,15 @@ class Block(object):
         assert self.prev_hash is not None
 
         block = {
-            "nonce": self.nonce,
             "at": self.timestamp,
+            "nonce": self.nonce,
+            "prev_hash": self.prev_hash,
             "difficulty": self.difficulty,
             "txs": map(lambda txn: txn.json(), self.txs)
         }
+
+        block_hash = Block.calculate_hash(block)
+        block["hash"] = block_hash
 
         return dumps(block)
 
