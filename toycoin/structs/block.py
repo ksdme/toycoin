@@ -8,6 +8,7 @@ from json import dumps
 from toycoin.conf import BlockConf
 from toycoin.structs.txn import Txn
 from toycoin.exceptions import MalformedBlock
+from toycoin.utils import validate_block_hash
 
 class Block(object):
     """
@@ -15,14 +16,18 @@ class Block(object):
         on a the toycoin blockchain
     """
 
-    def __init__(self, txs=None, nonce=""):
+    def __init__(self, prev_hash=None, txs=None, nonce="", difficulty=None):
         assert isinstance(nonce, str)
 
         self._timestamp = int(time())
+        self._difficulty = None
+        self._prev_hash = None
         self._nonce = nonce
         self._txs = []
 
         self.set_txs(txs)
+        self.set_prev_hash(prev_hash)
+        self.set_difficulty(difficulty)
 
     def add_tx(self, txn):
         """
@@ -33,7 +38,7 @@ class Block(object):
 
         # ensure the block isn't overcrowded
         if len(self.txs) >= BlockConf.MAX_TXNS_IN_BLOCK:
-            raise MalformedBlock("block txs overflow")
+            raise MalformedBlock(MalformedBlock.TXS_OVERFLOW)
 
         self._txs.append(txn)
 
@@ -50,14 +55,41 @@ class Block(object):
         for txn in txs:
             self.add_tx(txn)
 
+    def set_prev_hash(self, hesh):
+        """
+            simply sets the prev hash
+            onto this block
+        """
+        if hesh is None or not validate_block_hash(hesh):
+            raise MalformedBlock(MalformedBlock.BAD_PREV_HASH)
+
+        self._prev_hash = hesh
+
+    def set_difficulty(self, difficulty):
+        """
+            set the current difficulty the block
+            was mined with, other clients verify it
+        """
+        assert isinstance(difficulty, float)
+
+        # it should be > 0
+        if difficulty <= 0:
+            raise MalformedBlock(
+                MalformedBlock.BAD_DIFFICULTY)
+
+        self._difficulty = difficulty
+
     def json(self):
         """
             transforms a blocks into
             json form
         """
+        assert self.prev_hash is not None
+
         block = {
-            "time": self.timestamp,
             "nonce": self.nonce,
+            "at": self.timestamp,
+            "difficulty": self.difficulty,
             "txs": map(lambda txn: txn.json(), self.txs)
         }
 
@@ -81,3 +113,5 @@ class Block(object):
     txs = property(lambda self: self._txs)
     nonce = property(lambda self: self._nonce)
     timestamp = property(lambda self: self._timestamp)
+    prev_hash = property(lambda self: self._prev_hash)
+    difficulty = property(lambda self: self._difficulty)
