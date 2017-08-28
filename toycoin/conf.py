@@ -28,6 +28,9 @@ class WalletConf(enum):
     PUBLIC_KEY_FILE_NAME = "wallet_pub.pem"
     PRIVATE_KEY_FILE_NAME = "wallet_priv.pem"
 
+    # keys configuration
+    KEY_PAIR_E_VALUE = 65537
+
 class BlockChainConf(enum):
     """
         handles blockchain's conf,

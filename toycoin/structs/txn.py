@@ -5,9 +5,12 @@
 """
 from time import time
 from json import dumps
+from rsa.key import PublicKey
 
+from toycoin.conf import WalletConf
 from toycoin.exceptions import MalformedTransaction
-from toycoin.utils import validate_wallet_address, sign_txn
+from toycoin.utils import verify_output_sign, transform_alpha_to_pub_key
+from toycoin.utils import validate_wallet_address, sign_txn, sort_by_alpha
 
 class Txn(object):
     """
@@ -23,6 +26,31 @@ class Txn(object):
         """
 
         return isinstance(amount, float) and amount > 0
+
+    @staticmethod
+    def verify_txn(txn):
+        """
+            verifies a transaction,
+            that is checks if the output's are
+            signed properly and verifiable
+        """
+        assert isinstance(txn, dict)
+
+        # get the inp txn & validate it
+        inp_txn = str(txn["in"])
+        if not validate_wallet_address(inp_txn):
+            return False
+
+        # get the pub key from the alpha key of txn
+        pub_key = transform_alpha_to_pub_key(inp_txn)
+        pub_key = PublicKey(int(inp_txn), WalletConf.KEY_PAIR_SIZE)
+
+        # do the validation now for all outputs
+        for output in txn["out"]:
+            if not verify_output_sign(pub_key, output):
+                return False
+
+        return True
 
     def __init__(self, inp, outputs):
         assert isinstance(outputs, list)
@@ -63,12 +91,15 @@ class Txn(object):
         for out_addr, out_amt in self._outputs:
 
             out_txn = {
-                "amt": out_amt,
-                "to": out_addr
+                "as": out_addr,
+                "amt": out_amt
             }
 
+            # sort to maintain order
+            out_txn = sort_by_alpha(out_txn)
+
             signed_outputs.append({
-                "to": out_addr,
+                "as": out_addr,
                 "amt": out_amt,
                 "sign": sign_txn(dumps(out_txn), priv_key)
             })

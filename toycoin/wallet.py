@@ -11,6 +11,8 @@ from zipfile import ZipFile, ZIP_STORED
 from rsa import newkeys, PublicKey, PrivateKey
 
 from toycoin.conf import WalletConf
+from toycoin.exceptions import MalformedWallet
+from toycoin.utils import validate_wallet, transform_pub_key_to_alpha
 
 class Wallet(object):
     """
@@ -63,3 +65,16 @@ class Wallet(object):
 
             binary_data = StringIO(priv_key.save_pkcs1(format="PEM")).getvalue()
             walletfile.writestr(WalletConf.PRIVATE_KEY_FILE_NAME, binary_data)
+
+    @staticmethod
+    def get_public_key(wallet):
+        """
+            takes a wallet and generates your
+            public alphanumeric key
+        """
+        if not validate_wallet(wallet):
+            raise MalformedWallet(
+                MalformedWallet.BAD_WALLET)
+
+        pub_key = str(wallet[0].n)
+        return transform_pub_key_to_alpha(pub_key)

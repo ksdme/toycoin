@@ -2,14 +2,13 @@
     @author ksdme
     @created 27 August 2017 IST
 """
-from time import time
 from json import dumps
 from hashlib import md5
 
 from toycoin.conf import BlockConf
 from toycoin.structs.txn import Txn
 from toycoin.exceptions import MalformedBlock
-from toycoin.utils import validate_block_hash
+from toycoin.utils import validate_block_hash, get_time_milli, sort_by_alpha
 
 class Block(object):
     """
@@ -30,7 +29,7 @@ class Block(object):
     def __init__(self, prev_hash=None, txs=None, nonce="", difficulty=None):
         assert isinstance(nonce, str)
 
-        self._timestamp = int(time())
+        self._timestamp = get_time_milli()
         self._difficulty = None
         self._prev_hash = None
         self._nonce = nonce
@@ -107,6 +106,10 @@ class Block(object):
 
         block_hash = Block.calculate_hash(block)
         block["hash"] = block_hash
+
+        # sort the payload by key alphabet, to maintain
+        # consistency
+        block = sort_by_alpha(block)
 
         return dumps(block)
 

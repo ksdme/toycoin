@@ -43,7 +43,6 @@ class BlockChain(object):
             # before simply assuming that it is
             # a valid one
 
-
     def flush(self, filename=None):
         """
             periodically after a couple of blocks
